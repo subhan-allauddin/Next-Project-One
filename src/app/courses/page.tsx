@@ -35,24 +35,27 @@ function page() {
                   alt={course.title}
                 />
               </CardItem>
+              
               <div className="flex justify-between items-center mt-20">
+
+                <Link href="https://asrasoft.net" target="_blank">
                 <CardItem
                   translateZ={20}
-                  as={Link}
                   className="px-4 py-2 rounded-xl text-xs font-normal dark:text-white"
-                  href={'https://asrasoft.net'}
-                  target='_blank'
                 >
                   Try now →
                 </CardItem>
+                </Link>
+
+                <Link href="/contact" target="_blank">
                 <CardItem
                   translateZ={20}
-                  as={Link}
-                  href={'/contact'}
                   className="px-4 py-2 rounded-xl bg-black dark:bg-white dark:text-black text-white text-xs font-bold"
                 >
                   Sign up
                 </CardItem>
+                </Link>
+               
               </div>
             </CardBody>
           </CardContainer>
