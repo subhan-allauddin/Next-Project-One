@@ -7,7 +7,7 @@ import { AnimatedTooltip } from './ui/animated-tooltip';
 const people = [
   {
     id: 1,
-    name: "Umer",
+    name: "Mohammad Umer",
     designation: "Software Engineer",
     image: "/Images/CEOOFASRASOFTMUHAMMADUMER.png"
   },
