@@ -6,8 +6,8 @@ import './ui/HeroSection.css'
 
 export function MusicSchoolTestimonials() {
   return (
-    <div className="h-[40rem] rounded-md flex flex-col antialiased bg-white dark:bg-black bg-grid-white/[0.02] items-center justify-center relative overflow-hidden">
-      <div className="absolute pointer-events-none inset-0 flex items-center justify-center dark:bg-black bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>
+    <div className="h-[40rem] rounded-md flex flex-col antialiased bg-black bg-grid-white/[0.02] items-center justify-center relative overflow-hidden">
+      <div className="absolute pointer-events-none inset-0 flex items-center justify-center bg-black  [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>
      <div>
      <div className="flex justify-center gap-20 ">
         <h1 className="text-center para mb-20 fs text-white">Hear and Harmony:Voices Of Success </h1>
