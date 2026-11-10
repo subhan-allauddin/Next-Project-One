@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/utils/cn";
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
+import { Quote, Star } from "lucide-react";
 
 type CardItem = {
   quote: string;
@@ -24,88 +25,74 @@ export const InfiniteMovingCards: React.FC<InfiniteMovingCardsProps> = ({
   pauseOnHover = true,
   className,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scrollerRef = useRef<HTMLUListElement>(null);
-  const [start, setStart] = useState(false);
+  const animationDuration =
+    speed === "fast" ? "24s" : speed === "normal" ? "44s" : "70s";
+  const animationDirection = direction === "left" ? "normal" : "reverse";
 
-  useEffect(() => {
-    const addAnimation = () => {
-      if (containerRef.current && scrollerRef.current) {
-        const scrollerContent = Array.from(scrollerRef.current.children);
+  const renderCard = (item: CardItem, index: number, isDuplicate: boolean) => (
+    <li
+      key={`${isDuplicate ? "dup" : "orig"}-${item.name}-${index}`}
+      aria-hidden={isDuplicate || undefined}
+      className="w-[320px] sm:w-[400px] md:w-[440px] max-w-full relative rounded-2xl border border-white/10 flex-shrink-0 px-7 py-6 bg-gradient-to-b from-zinc-900/90 to-zinc-950/95 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:border-teal-400/35 transition-colors duration-300"
+    >
+      <blockquote className="flex flex-col justify-between h-full">
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <Quote className="w-5 h-5 text-teal-400/70" />
+            <div className="flex items-center gap-0.5 text-amber-400">
+              {Array.from({ length: 5 }).map((_, starIdx) => (
+                <Star
+                  key={starIdx}
+                  className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
+                />
+              ))}
+            </div>
+          </div>
+          <p className="text-sm sm:text-[15px] leading-relaxed text-neutral-200 font-normal">
+            &ldquo;{item.quote}&rdquo;
+          </p>
+        </div>
 
-        scrollerContent.forEach((item) => {
-          const duplicatedItem = item.cloneNode(true);
-          scrollerRef.current!.appendChild(duplicatedItem);
-        });
-
-        setDirection();
-        setSpeed();
-        setStart(true);
-      }
-    };
-
-    const setDirection = () => {
-      containerRef.current?.style.setProperty(
-        "--animation-direction",
-        direction === "left" ? "forwards" : "reverse"
-      );
-    };
-
-    const setSpeed = () => {
-      const duration =
-        speed === "fast" ? "20s" : speed === "normal" ? "40s" : "90s";
-      containerRef.current?.style.setProperty("--animation-duration", duration);
-    };
-
-    addAnimation();
-  }, [direction, speed]);
+        <div className="mt-6 pt-4 border-t border-white/[0.08] flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-teal-400/30 to-emerald-500/20 border border-teal-400/30 flex items-center justify-center text-xs font-bold text-teal-200">
+            {item.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .slice(0, 2)}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-white">
+              {item.name}
+            </span>
+            <span className="text-xs text-neutral-400">{item.title}</span>
+          </div>
+        </div>
+      </blockquote>
+    </li>
+  );
 
   return (
     <div
-      ref={containerRef}
+      style={
+        {
+          "--animation-duration": animationDuration,
+          "--animation-direction": animationDirection,
+        } as React.CSSProperties
+      }
       className={cn(
-        "scroller relative z-20 max-w-7xl overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)]",
+        "scroller relative z-20 max-w-7xl w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_14%,white_86%,transparent)]",
         className
       )}
     >
       <ul
-        ref={scrollerRef}
         className={cn(
-          "flex min-w-full shrink-0 gap-4 py-4 w-max flex-nowrap",
-          start && "animate-scroll",
+          "flex w-max shrink-0 flex-nowrap py-4 gap-4 pr-4 animate-scroll will-change-transform motion-reduce:animate-none",
           pauseOnHover && "hover:[animation-play-state:paused]"
         )}
       >
-        {items.map((item) => (
-          <li
-            key={item.name}
-            className="w-[350px] max-w-full relative rounded-2xl border border-b-0 flex-shrink-0 border-slate-700 px-8 py-6 md:w-[450px]"
-            style={{
-              background:
-                "linear-gradient(180deg, var(--slate-800), var(--slate-900))",
-            }}
-          >
-            <blockquote>
-              <div
-                aria-hidden="true"
-                className="user-select-none -z-1 pointer-events-none absolute -left-0.5 -top-0.5 h-[calc(100%_+_4px)] w-[calc(100%_+_4px)]"
-              ></div>
-              <span className="relative z-20 text-sm leading-[1.6] text-gray-100 font-normal">
-                {item.quote}
-              </span>
-              <div className="relative z-20 mt-6 flex flex-row items-center">
-                <span className="flex flex-col gap-1">
-                  <span className="text-sm leading-[1.6] text-gray-400 font-normal">
-                    {item.name}
-                  </span>
-                  <span className="text-sm leading-[1.6] text-gray-400 font-normal">
-                    {item.title}
-                  </span>
-                </span>
-              </div>
-            </blockquote>
-          </li>
-        ))}
+        {items.map((item, idx) => renderCard(item, idx, false))}
+        {items.map((item, idx) => renderCard(item, idx, true))}
       </ul>
     </div>
   );

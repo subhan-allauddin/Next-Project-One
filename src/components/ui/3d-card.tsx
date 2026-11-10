@@ -76,7 +76,8 @@ export const CardContainer = ({
 export const CardBody = ({
   children,
   className,
-}: {
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
   className?: string;
 }) => {
@@ -86,6 +87,7 @@ export const CardBody = ({
         "h-96 w-96 [transform-style:preserve-3d] [&>*]:[transform-style:preserve-3d]",
         className
       )}
+      {...rest}
     >
       {children}
     </div>

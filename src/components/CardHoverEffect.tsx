@@ -1,71 +1,62 @@
 "use client";
 
 import Link from "next/link";
-import { HoverEffect } from "./ui/card-hover-effect";
+import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
+import { HoverEffect, HoverEffectItem } from "./ui/card-hover-effect";
+import CoursesData from "../data/music_courses.json";
 
-// Rename the array to avoid conflict
-export const hoverEffectItems = [
-  {
-    title: "Stripe",
-    description:
-      "A technology company that builds economic infrastructure for the internet.",
-    link: "https://stripe.com",
-  },
-  {
-    title: "Netflix",
-    description:
-      "A streaming service that offers a wide variety of award-winning TV shows, movies, anime, documentaries, and more on thousands of internet-connected devices.",
-    link: "https://netflix.com",
-  },
-  {
-    title: "Google",
-    description:
-      "A multinational technology company that specializes in Internet-related services and products.",
-    link: "https://google.com",
-  },
-  {
-    title: "Meta",
-    description:
-      "A technology company that focuses on building products that advance Facebook's mission of bringing the world closer together.",
-    link: "https://meta.com",
-  },
-  {
-    title: "Amazon",
-    description:
-      "A multinational technology company focusing on e-commerce, cloud computing, digital streaming, and artificial intelligence.",
-    link: "https://amazon.com",
-  },
-  {
-    title: "Microsoft",
-    description:
-      "A multinational technology company that develops, manufactures, licenses, supports, and sells computer software, consumer electronics, personal computers, and related services.",
-    link: "https://microsoft.com",
-  },
-];
+const additionalCourses: HoverEffectItem[] = CoursesData.courses
+  .filter((course) => !course.isFeatured)
+  .map((course) => ({
+    title: course.title,
+    description: course.description,
+    link: `/courses#${course.slug}`,
+    badge: "Course",
+  }));
 
-// Functional component to render HoverEffect
 export function CardHoverEffect() {
   return (
-    <div className="max-w-full mx-auto px-8 py-12 bg-gray-900">
-      <div className="text-center">
-        <h2 className="text-base text-teal-600 font-semibold tracking-wide uppercase">
-          FEATURED COURSES
-        </h2>
-        <p className="mt-20 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
-          Learn With The Best
-        </p>
-      </div>
-      <div>
-        <HoverEffect items={hoverEffectItems} />
-      </div>
-      <div className="mt-20 text-center">
-        <Link
-          href="./courses"
-          className="px-4 py-2 rounded border border-neutral-600 text-neutral-700 bg-white hover:bg-gray-100 transition duration-200"
+    <section className="relative py-20 sm:py-24 bg-neutral-950 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06]">
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className="text-center max-w-2xl mx-auto"
         >
-          View All Courses
-        </Link>
+          <span className="text-xs sm:text-sm text-teal-400 font-semibold tracking-[0.2em] uppercase">
+            More Courses
+          </span>
+          <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
+            Explore More Courses
+          </h2>
+          <p className="mt-4 text-sm sm:text-base text-neutral-400">
+            Browse additional subjects from the course catalogue.
+          </p>
+        </motion.div>
+
+        <div className="mt-8">
+          <HoverEffect items={additionalCourses} />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.45 }}
+          className="mt-10 text-center"
+        >
+          <Link
+            href="/courses"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/15 bg-white text-black font-semibold text-sm hover:bg-teal-300 hover:border-teal-300 transition-all duration-200 active:scale-[0.98]"
+          >
+            <span>View All Courses</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </motion.div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -5,6 +5,7 @@ const { default: flattenColorPalette } = require("tailwindcss/lib/util/flattenCo
 const svgToDataUri = require("mini-svg-data-uri");
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -14,24 +15,32 @@ const config: Config = {
  // Enables dark mode via class
   theme: {
   	extend: {
+  		fontFamily: {
+  			sans: ['var(--font-geist-sans)', ...defaultTheme.fontFamily.sans],
+  			mono: ['var(--font-geist-mono)', ...defaultTheme.fontFamily.mono],
+  		},
   		animation: {
-  			spotlight: 'spotlight 2s ease .75s 1 forwards',
-  			scroll: 'scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite'
+  			spotlight: 'spotlight 2.8s cubic-bezier(0.16, 1, 0.3, 1) .35s 1 forwards',
+  			scroll: 'scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite',
+  			'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
   		},
   		keyframes: {
   			spotlight: {
   				'0%': {
   					opacity: '0',
-  					transform: 'translate(-72%, -62%) scale(0.5)'
+  					transform: 'translate3d(-72%, -62%, 0) scale(0.5)'
   				},
   				'100%': {
   					opacity: '1',
-  					transform: 'translate(-50%,-40%) scale(1)'
+  					transform: 'translate3d(-50%, -40%, 0) scale(1)'
   				}
   			},
   			scroll: {
+  				from: {
+  					transform: 'translate3d(0, 0, 0)'
+  				},
   				to: {
-  					transform: 'translate(calc(-50% - 0.5rem))'
+  					transform: 'translate3d(-50%, 0, 0)'
   				}
   			}
   		},
