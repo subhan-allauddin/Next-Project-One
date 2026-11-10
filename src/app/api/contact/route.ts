@@ -8,6 +8,25 @@ interface ContactPayload {
   message?: string;
 }
 
+interface ResendSendPayload {
+  from: string;
+  to: string[];
+  reply_to?: string;
+  subject: string;
+  text: string;
+  html: string;
+}
+
+interface ResendSendResult {
+  ok: boolean;
+  status: number;
+  data: {
+    id?: string;
+    message?: string;
+    name?: string;
+  };
+}
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function escapeHtml(value: string): string {
@@ -17,6 +36,27 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+async function sendResendEmail(
+  apiKey: string,
+  payload: ResendSendPayload
+): Promise<ResendSendResult> {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = (await response.json()) as ResendSendResult["data"];
+  return {
+    ok: response.ok,
+    status: response.status,
+    data,
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -98,70 +138,99 @@ export async function POST(req: NextRequest) {
               </tr>`
       : "";
 
-    const resendResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: [recipientEmail],
-        reply_to: email,
-        subject: `[Harmony Academy] ${topic}${course ? ` — ${course}` : ""} from ${name || email}`,
-        text: `New contact form submission\n\nName: ${name || "Not provided"}\nEmail: ${email}\nTopic: ${topic}${courseText}\n\nMessage:\n${message}`,
-        html: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #09090b; color: #f4f4f5; border-radius: 12px; border: 1px solid #27272a;">
-            <h2 style="margin: 0 0 16px; color: #2dd4bf; font-size: 20px;">New Contact Inquiry — Harmony Academy</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 14px;">
-              <tr>
-                <td style="padding: 8px 0; color: #a1a1aa; width: 90px;">Name:</td>
-                <td style="padding: 8px 0; color: #ffffff; font-weight: 600;">${safeName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #a1a1aa;">Email:</td>
-                <td style="padding: 8px 0; color: #2dd4bf;">${safeEmail}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #a1a1aa;">Topic:</td>
-                <td style="padding: 8px 0; color: #ffffff;">${safeTopic}</td>
-              </tr>
-              ${courseHtml}
-            </table>
-            <div style="padding: 16px; background: #18181b; border-radius: 8px; border: 1px solid #27272a; font-size: 14px; line-height: 1.6; color: #e4e4e7;">
-              ${safeMessage}
-            </div>
-            <p style="margin: 16px 0 0; font-size: 12px; color: #71717a;">
-              Tip: Click Reply in Gmail to respond directly to ${safeEmail}.
-            </p>
+    // 1. Send the visitor's inquiry to the academy owner's inbox
+    const ownerEmail = await sendResendEmail(apiKey, {
+      from: fromEmail,
+      to: [recipientEmail],
+      reply_to: email,
+      subject: `[Harmony Academy] ${topic}${course ? ` — ${course}` : ""} from ${name || email}`,
+      text: `New contact form submission\n\nName: ${name || "Not provided"}\nEmail: ${email}\nTopic: ${topic}${courseText}\n\nMessage:\n${message}`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #09090b; color: #f4f4f5; border-radius: 12px; border: 1px solid #27272a;">
+          <h2 style="margin: 0 0 16px; color: #2dd4bf; font-size: 20px;">New Contact Inquiry — Harmony Academy</h2>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 14px;">
+            <tr>
+              <td style="padding: 8px 0; color: #a1a1aa; width: 90px;">Name:</td>
+              <td style="padding: 8px 0; color: #ffffff; font-weight: 600;">${safeName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #a1a1aa;">Email:</td>
+              <td style="padding: 8px 0; color: #2dd4bf;">${safeEmail}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #a1a1aa;">Topic:</td>
+              <td style="padding: 8px 0; color: #ffffff;">${safeTopic}</td>
+            </tr>
+            ${courseHtml}
+          </table>
+          <div style="padding: 16px; background: #18181b; border-radius: 8px; border: 1px solid #27272a; font-size: 14px; line-height: 1.6; color: #e4e4e7;">
+            ${safeMessage}
           </div>
-        `,
-      }),
+          <p style="margin: 16px 0 0; font-size: 12px; color: #71717a;">
+            Tip: Click Reply in Gmail to respond directly to ${safeEmail}.
+          </p>
+        </div>
+      `,
     });
 
-    const resendData = (await resendResponse.json()) as {
-      id?: string;
-      message?: string;
-      name?: string;
-    };
-
-    if (!resendResponse.ok) {
-      console.error("Resend API error:", resendData);
+    if (!ownerEmail.ok) {
+      console.error("Resend owner email error:", ownerEmail.data);
       return NextResponse.json(
         {
           error:
-            resendData.message ||
+            ownerEmail.data.message ||
             "Failed to send your message. Please try again shortly.",
         },
-        { status: resendResponse.status >= 400 ? resendResponse.status : 500 }
+        { status: ownerEmail.status >= 400 ? ownerEmail.status : 500 }
+      );
+    }
+
+    // 2. Send a thank-you confirmation email back to the visitor's email
+    const greetingName = name ? ` ${name}` : "";
+    const safeGreetingName = name ? ` ${safeName}` : "";
+    const thankYouEmail = await sendResendEmail(apiKey, {
+      from: fromEmail,
+      to: [email],
+      reply_to: recipientEmail,
+      subject: `Thanks for reaching out to Harmony Academy!`,
+      text: `Hi${greetingName},\n\nThank you for contacting Harmony Academy! We have received your message regarding "${topic}"${course ? ` (${course})` : ""} and will get back to you soon.\n\nYour message:\n${message}\n\nBest regards,\nHarmony Academy`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #09090b; color: #f4f4f5; border-radius: 12px; border: 1px solid #27272a;">
+          <h2 style="margin: 0 0 12px; color: #2dd4bf; font-size: 20px;">Thank You for Contacting Us!</h2>
+          <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #e4e4e7;">
+            Hi${safeGreetingName},<br /><br />
+            Thanks for reaching out to <strong>Harmony Academy</strong>! We&apos;ve received your inquiry about <strong>${safeTopic}</strong>${course ? ` (${safeCourse})` : ""} and will reply to you shortly.
+          </p>
+          <div style="padding: 14px 16px; background: #18181b; border-radius: 8px; border: 1px solid #27272a; font-size: 13px; line-height: 1.6; color: #a1a1aa;">
+            <strong style="color: #f4f4f5; display: block; margin-bottom: 6px;">Copy of your message:</strong>
+            ${safeMessage}
+          </div>
+          <p style="margin: 18px 0 0; font-size: 13px; color: #71717a;">
+            Warm regards,<br />
+            <span style="color: #e4e4e7; font-weight: 600;">Harmony Academy</span>
+          </p>
+        </div>
+      `,
+    });
+
+    if (!thankYouEmail.ok) {
+      // Do not fail the main contact submission if Resend sandbox restricts external auto-reply recipients.
+      console.warn(
+        "Resend auto-reply skipped/failed:",
+        thankYouEmail.status,
+        thankYouEmail.data
       );
     }
 
     return NextResponse.json(
       {
         success: true,
-        id: resendData.id,
-        message: "Your message has been sent.",
+        id: ownerEmail.data.id,
+        autoReplySent: thankYouEmail.ok,
+        autoReplyId: thankYouEmail.data.id ?? null,
+        message: thankYouEmail.ok
+          ? "Your message has been sent, and we emailed a thank-you confirmation to your inbox."
+          : "Your message has been sent! We will get back to you soon.",
       },
       { status: 200 }
     );
